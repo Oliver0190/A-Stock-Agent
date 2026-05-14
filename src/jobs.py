@@ -43,8 +43,8 @@ def morning_brief() -> None:
             continue
         try:
             analysis, _ = _analyze(item, cfg)
-            # 基本面 (财报+新闻); 本地拉不到时返回 {"financials": None, "news": None}, 不影响主流程
-            fund_data = fund.fetch_fundamentals(item["symbol"])
+            # 基本面 (财报+新闻+下次财报+现金跑道+公司名核验); 本地拉不到时各字段返回 None, 不影响主流程
+            fund_data = fund.fetch_fundamentals(item["symbol"], configured_name=item["name"])
             text = llm.morning_brief(
                 item["name"], item["symbol"], analysis, model, effort,
                 fundamentals=fund_data,
