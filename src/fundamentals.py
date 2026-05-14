@@ -19,18 +19,36 @@ def _safe_num(v):
         return None
 
 
-def _report_period_type(date_str: str) -> str:
-    """从报告期日期识别报告类型, 避免 LLM 把"半年累计"当"单季"陈述."""
+# 非公历年制的港股 (财年截止日 MM-DD)
+# 阿里巴巴 财年 4月-3月, 京东物流/京东集团 公历年制不需登记
+FISCAL_YEAR_END_BY_SYMBOL = {
+    "09988": "03-31",  # 阿里巴巴 (财年 4月-次年3月)
+    # 后续如有其他非公历年制公司, 在此追加
+}
+
+
+def _report_period_type(date_str: str, symbol: str = "") -> str:
+    """从报告期日期 + 公司财年规则识别报告类型, 避免 LLM 把累计当单季陈述."""
     if not date_str:
         return "未知"
-    if "03-31" in date_str:
-        return "Q1单季(港股一般不披露季度报, A+H 双重上市会有)"
-    if "06-30" in date_str:
-        return "中报(半年累计, 即1-6月合计)"
-    if "09-30" in date_str:
-        return "Q3累计(港股一般无, A+H 双重上市会有)"
-    if "12-31" in date_str:
-        return "年报(全年累计, 即1-12月合计)"
+    fye = FISCAL_YEAR_END_BY_SYMBOL.get(symbol, "12-31")
+    md = date_str[-5:]
+    if fye == "12-31":
+        # 标准公历年制 (绝大多数公司)
+        return {
+            "03-31": "Q1单季(港股一般不披露, A+H双重上市会有)",
+            "06-30": "中报(半年累计, 即1-6月合计)",
+            "09-30": "Q3累计(港股一般无, A+H双重上市会有)",
+            "12-31": "年报(全年累计, 即1-12月合计)",
+        }.get(md, "未知")
+    if fye == "03-31":
+        # 4月-次年3月制 (阿里巴巴等)
+        return {
+            "06-30": "Q1单季(财年 4-6月)",
+            "09-30": "中报(财年半年累计, 即财年前6个月 4-9月)",
+            "12-31": "Q3累计(财年前9个月 4-12月)",
+            "03-31": "年报(财年全年累计, 即4月-次年3月)",
+        }.get(md, "未知")
     return "未知"
 
 
@@ -64,7 +82,7 @@ def fetch_hk_financials(symbol: str, max_periods: int = 4) -> Optional[dict]:
             date_str = str(row.get("报告期", row.get("REPORT_DATE", "")))[:10]
             rec = {
                 "report_date": date_str,
-                "report_period_type": _report_period_type(date_str),
+                "report_period_type": _report_period_type(date_str, symbol),
                 "revenue": _safe_num(row.get("营业总收入", row.get("OPERATE_INCOME"))),
                 "revenue_yoy_pct": _safe_num(
                     row.get("营业总收入同比增长率", row.get("OPERATE_INCOME_YOY"))
@@ -139,21 +157,35 @@ def fetch_hk_balance_cash(symbol: str) -> Optional[float]:
 
 
 def fetch_next_earnings_date(symbol: str) -> Optional[str]:
-    """yfinance 取下次财报日期 (港股代码自动转 0700.HK 格式)."""
+    """yfinance 取**未来**最近一次财报日期 (过滤掉已过去的日期)."""
     try:
+        from datetime import datetime
         import yfinance as yf
         yf_sym = symbol.lstrip("0").zfill(4) + ".HK"
         ticker = yf.Ticker(yf_sym)
         cal = ticker.calendar
         if not cal:
             return None
+        dates = None
         if isinstance(cal, dict):
             dates = cal.get("Earnings Date")
-            if dates:
-                if isinstance(dates, list) and dates:
-                    return str(dates[0])[:10]
-                return str(dates)[:10]
-        return None
+        if not dates:
+            return None
+        if not isinstance(dates, list):
+            dates = [dates]
+
+        today = datetime.now().date()
+        future_dates = []
+        for d in dates:
+            try:
+                date_obj = datetime.strptime(str(d)[:10], "%Y-%m-%d").date()
+                if date_obj > today:
+                    future_dates.append(date_obj)
+            except (ValueError, TypeError):
+                continue
+        if not future_dates:
+            return None
+        return min(future_dates).strftime("%Y-%m-%d")
     except Exception:
         return None
 
