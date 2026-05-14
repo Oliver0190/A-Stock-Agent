@@ -7,6 +7,7 @@ import yaml
 from dotenv import load_dotenv
 
 from src import data, analyzer, llm, feishu, state
+from src import fundamentals as fund
 
 load_dotenv()
 
@@ -42,7 +43,12 @@ def morning_brief() -> None:
             continue
         try:
             analysis, _ = _analyze(item, cfg)
-            text = llm.morning_brief(item["name"], item["symbol"], analysis, model, effort)
+            # 基本面 (财报+新闻); 本地拉不到时返回 {"financials": None, "news": None}, 不影响主流程
+            fund_data = fund.fetch_fundamentals(item["symbol"])
+            text = llm.morning_brief(
+                item["name"], item["symbol"], analysis, model, effort,
+                fundamentals=fund_data,
+            )
             title = f"📊 {item['name']}({item['symbol']}) 盘前简报 · {date_str}"
             feishu.send_card(title, text, color="blue")
             state.mark_sent("morning_brief", item["symbol"])
