@@ -2,8 +2,8 @@ name: Daily Snapshot
 
 on:
   schedule:
-    # 港股 16:30 HKT = 08:30 UTC, 周一至周五 (收盘后约 30 分钟)
-    - cron: "30 8 * * 1-5"
+    # 港股 16:37 HKT = 08:37 UTC, 周一至周五 (收盘后约 37 分钟, 错开整点高峰)
+    - cron: "37 8 * * 1-5"
   workflow_dispatch:
 
 jobs:

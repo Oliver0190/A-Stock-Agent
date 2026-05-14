@@ -2,8 +2,8 @@ name: Morning Brief
 
 on:
   schedule:
-    # 港股 09:00 HKT = 01:00 UTC, 周一至周五
-    - cron: "0 1 * * 1-5"
+    # 港股 09:07 HKT = 01:07 UTC, 周一至周五 (错开整点高峰)
+    - cron: "7 1 * * 1-5"
   workflow_dispatch:
 
 jobs:
