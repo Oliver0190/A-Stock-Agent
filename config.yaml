@@ -41,6 +41,14 @@ watchlist:
   - symbol: "06809"
     name: 澜起科技
     # 不设阈值: 只接收盘前简报和盘后快照, 不接收盘中价格预警
+  - symbol: "01211"
+    name: 比亚迪股份
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "03750"
+    name: 宁德时代
+    alert_low: 0
+    alert_high: 9999
 
 analyzer:
   lookback_days: 730
