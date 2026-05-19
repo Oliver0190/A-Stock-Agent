@@ -2,7 +2,7 @@ name: Morning Brief
 
 on:
   schedule:
-    # 港股 09:07 HKT = 01:07 UTC, 周一至周五 (错开整点高峰)
+    # A股 09:07 CST = 01:07 UTC, 周一至周五 (错开整点高峰)
     - cron: "7 1 * * 1-5"
   workflow_dispatch:
 
@@ -26,7 +26,7 @@ jobs:
       - name: Run morning brief
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
-          TZ: Asia/Hong_Kong
+          FEISHU_WEBHOOK_URL_ASTOCK: ${{ secrets.FEISHU_WEBHOOK_URL_ASTOCK }}
+          TZ: Asia/Shanghai
           DATA_SOURCE: akshare
         run: python -m src.jobs morning

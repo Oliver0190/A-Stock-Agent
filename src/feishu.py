@@ -3,9 +3,9 @@ import requests
 
 
 def _webhook() -> str:
-    url = os.environ.get("FEISHU_WEBHOOK_URL")
+    url = os.environ.get("FEISHU_WEBHOOK_URL_ASTOCK")
     if not url:
-        raise RuntimeError("FEISHU_WEBHOOK_URL not set")
+        raise RuntimeError("FEISHU_WEBHOOK_URL_ASTOCK not set")
     return url
 
 

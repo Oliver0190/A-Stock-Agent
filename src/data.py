@@ -1,4 +1,4 @@
-"""数据层 —— yfinance / Stooq 双源, GitHub Actions 上可切 AKShare."""
+"""数据层 —— yfinance / Stooq 双源, GitHub Actions 上可切 AKShare (A股)."""
 import io
 import os
 import time
@@ -7,14 +7,16 @@ import pandas as pd
 import requests
 
 
-def _hk_yf_symbol(symbol: str) -> str:
-    """00700 -> 0700.HK ; 09988 -> 9988.HK"""
-    return symbol.lstrip("0").zfill(4) + ".HK"
+def _a_yf_symbol(symbol: str) -> str:
+    """A股代码转 yfinance 格式: 600519 -> 600519.SS, 002594 -> 002594.SZ"""
+    if symbol.startswith("6"):
+        return symbol + ".SS"
+    return symbol + ".SZ"
 
 
 def _fetch_yfinance(symbol: str, lookback_days: int) -> pd.DataFrame:
     import yfinance as yf
-    yf_symbol = _hk_yf_symbol(symbol)
+    yf_symbol = _a_yf_symbol(symbol)
     end = datetime.now()
     start = end - timedelta(days=lookback_days + 30)
     start_s = start.strftime("%Y-%m-%d")
@@ -58,18 +60,19 @@ def _fetch_yfinance(symbol: str, lookback_days: int) -> pd.DataFrame:
 
 
 def _fetch_stooq(symbol: str, lookback_days: int) -> pd.DataFrame:
-    """Stooq 是欧洲金融数据站, 国内一般能直连, 当 yfinance 不可用时的兜底."""
-    yf_symbol = _hk_yf_symbol(symbol).lower()
+    """Stooq 兜底, A股用 .ss/.sz 后缀."""
+    suffix = ".ss" if symbol.startswith("6") else ".sz"
+    stooq_symbol = symbol + suffix
     end = datetime.now()
     start = end - timedelta(days=lookback_days + 30)
     url = (
-        f"https://stooq.com/q/d/l/?s={yf_symbol}"
+        f"https://stooq.com/q/d/l/?s={stooq_symbol}"
         f"&i=d&d1={start.strftime('%Y%m%d')}&d2={end.strftime('%Y%m%d')}"
     )
     resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
     resp.raise_for_status()
     if "No data" in resp.text or len(resp.text) < 100:
-        raise RuntimeError(f"stooq no data for {yf_symbol}")
+        raise RuntimeError(f"stooq no data for {stooq_symbol}")
 
     df = pd.read_csv(io.StringIO(resp.text))
     df = df.rename(columns={
@@ -86,7 +89,7 @@ def _fetch_akshare(symbol: str, lookback_days: int) -> pd.DataFrame:
     import akshare as ak
     end = datetime.now()
     start = end - timedelta(days=lookback_days + 30)
-    df = ak.stock_hk_hist(
+    df = ak.stock_zh_a_hist(
         symbol=symbol, period="daily",
         start_date=start.strftime("%Y%m%d"),
         end_date=end.strftime("%Y%m%d"),
@@ -104,7 +107,7 @@ def _fetch_akshare(symbol: str, lookback_days: int) -> pd.DataFrame:
     return df.tail(lookback_days).reset_index(drop=True)
 
 
-def fetch_hk_daily(symbol: str, lookback_days: int = 365) -> pd.DataFrame:
+def fetch_daily(symbol: str, lookback_days: int = 365) -> pd.DataFrame:
     source = os.environ.get("DATA_SOURCE", "yfinance").lower()
     errors = []
 
@@ -124,9 +127,9 @@ def fetch_hk_daily(symbol: str, lookback_days: int = 365) -> pd.DataFrame:
     raise RuntimeError(f"all data sources failed for {symbol}: {' | '.join(errors)}")
 
 
-def fetch_hk_spot(symbol: str) -> dict | None:
+def fetch_spot(symbol: str) -> dict | None:
     import yfinance as yf
-    ticker = yf.Ticker(_hk_yf_symbol(symbol))
+    ticker = yf.Ticker(_a_yf_symbol(symbol))
     df = ticker.history(period="2d", interval="1d")
     if df is None or df.empty:
         return None

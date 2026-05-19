@@ -20,7 +20,7 @@ def load_config() -> dict:
 
 def _analyze(item: dict, cfg: dict) -> tuple[dict, "pd.DataFrame"]:
     az_cfg = cfg.get("analyzer", {})
-    df = data.fetch_hk_daily(item["symbol"], az_cfg.get("lookback_days", 365))
+    df = data.fetch_daily(item["symbol"], az_cfg.get("lookback_days", 365))
     analysis = analyzer.full_analysis(
         df,
         ma_window=az_cfg.get("ma_window", 60),
@@ -255,7 +255,7 @@ def intraday_alert() -> None:
     for item in cfg["watchlist"]:
         symbol = item["symbol"]
         try:
-            spot = data.fetch_hk_spot(symbol)
+            spot = data.fetch_spot(symbol)
             if spot is None:
                 continue
             price = spot["price"]
