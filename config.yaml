@@ -29,6 +29,34 @@ watchlist:
     name: 中微公司
     alert_low: 0
     alert_high: 9999
+  - symbol: "300274"
+    name: 阳光电源
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "601318"
+    name: 中国平安
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "600309"
+    name: 万华化学
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "300124"
+    name: 汇川技术
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "000977"
+    name: 浪潮信息
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "601899"
+    name: 紫金矿业
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "600150"
+    name: 中国船舶
+    alert_low: 0
+    alert_high: 9999
 
 analyzer:
   lookback_days: 730
