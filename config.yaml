@@ -57,6 +57,18 @@ watchlist:
     name: 中国船舶
     alert_low: 0
     alert_high: 9999
+  - symbol: "301200"
+    name: 大族数控
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "002837"
+    name: 英维克
+    alert_low: 0
+    alert_high: 9999
+  - symbol: "600487"
+    name: 亨通光电
+    alert_low: 0
+    alert_high: 9999
 
 analyzer:
   lookback_days: 730
