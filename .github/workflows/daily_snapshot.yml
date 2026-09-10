@@ -1,13 +1,12 @@
 name: Daily Snapshot
 
 on:
-  schedule:
-    # A股 15:37 CST = 07:37 UTC, 周一至周五 (收盘后约 37 分钟, 错开整点高峰)
-    - cron: "37 7 * * 1-5"
+  # Retired: collection is now owned by the local dual-market website.
   workflow_dispatch:
 
 jobs:
   snapshot:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

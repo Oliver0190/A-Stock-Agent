@@ -1,13 +1,12 @@
 name: Morning Brief
 
 on:
-  schedule:
-    # A股 09:07 CST = 01:07 UTC, 周一至周五 (错开整点高峰)
-    - cron: "7 1 * * 1-5"
+  # Retired: collection is now owned by the local dual-market website.
   workflow_dispatch:
 
 jobs:
   brief:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
